@@ -23,6 +23,10 @@ public class CitiesController {
 
     @PostMapping("/deport/{from}/{to}")
     public ResponseEntity<?> deport(@PathVariable @NonNull Long from, @PathVariable @NonNull Long to) {
+        if (from.equals(to)) {
+            return ResponseEntity.badRequest().build();
+        }
+
         return cityService.deport(from, to) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 }
