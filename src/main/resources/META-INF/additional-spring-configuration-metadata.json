@@ -1,0 +1,9 @@
+{
+  "properties": [
+    {
+      "name": "cities.base-url",
+      "type": "java.lang.String",
+      "description": "Description for cities.base-url."
+    }
+  ]
+}

@@ -1,16 +1,11 @@
 package ru.jakesmokie.cities.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.impl.client.HttpClients;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 import ru.jakesmokie.cities.models.CityDto;
 import ru.jakesmokie.cities.models.input.CityInputDto;
 import ru.jakesmokie.cities.models.input.CoordinatesInputDto;
@@ -21,16 +16,18 @@ import java.util.Optional;
 
 @Service
 public class CityService implements ICityService {
-    private final ObjectMapper objectMapper;
+    private final String baseUrl;
+    private final IRestTemplateService restTemplateService;
 
-    public CityService(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public CityService(Environment env, IRestTemplateService restTemplateService) {
+        baseUrl = env.getRequiredProperty("cities.base-url");
+        this.restTemplateService = restTemplateService;
     }
 
     public CityDto get(long id) {
         try {
-            val response = restTemplate()
-                .exchange("https://localhost:50002/cities/api/cities/" + id, HttpMethod.GET, null, CityDto.class);
+            val response = restTemplateService.get()
+                .exchange(baseUrl + id, HttpMethod.GET, null, CityDto.class);
 
             return response.getBody();
         } catch (HttpClientErrorException.NotFound e) {
@@ -88,18 +85,7 @@ public class CityService implements ICityService {
             .population(population)
             .build();
 
-        restTemplate()
-            .exchange("https://localhost:50002/cities/api/cities/" + city.getId(), HttpMethod.PATCH, new HttpEntity<>(cityInputDto), String.class);
-    }
-
-    private RestTemplate restTemplate() {
-        val httpClient = HttpClients.custom()
-            .setSSLHostnameVerifier(new NoopHostnameVerifier())
-            .build();
-
-        val requestFactory = new HttpComponentsClientHttpRequestFactory();
-        requestFactory.setHttpClient(httpClient);
-
-        return new RestTemplate(requestFactory);
+        restTemplateService.get()
+            .exchange(baseUrl + city.getId(), HttpMethod.PATCH, new HttpEntity<>(cityInputDto), String.class);
     }
 }
