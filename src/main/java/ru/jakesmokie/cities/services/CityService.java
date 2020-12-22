@@ -1,11 +1,9 @@
 package ru.jakesmokie.cities.services;
 
+import feign.FeignException;
 import lombok.val;
-import org.springframework.core.env.Environment;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import ru.jakesmokie.cities.models.CityDto;
 import ru.jakesmokie.cities.models.input.CityInputDto;
 import ru.jakesmokie.cities.models.input.CoordinatesInputDto;
@@ -16,21 +14,12 @@ import java.util.Optional;
 
 @Service
 public class CityService implements ICityService {
-    private final String baseUrl;
-    private final IRestTemplateService restTemplateService;
-
-    public CityService(Environment env, IRestTemplateService restTemplateService) {
-        baseUrl = env.getRequiredProperty("cities.base-url");
-        this.restTemplateService = restTemplateService;
-    }
+    @Autowired IFirstServiceIntegration integration;
 
     public CityDto get(long id) {
         try {
-            val response = restTemplateService.get()
-                .exchange(baseUrl + id, HttpMethod.GET, null, CityDto.class);
-
-            return response.getBody();
-        } catch (HttpClientErrorException.NotFound e) {
+            return integration.get(id);
+        } catch (FeignException.FeignClientException.NotFound notFound) {
             return null;
         }
     }
@@ -85,7 +74,6 @@ public class CityService implements ICityService {
             .population(population)
             .build();
 
-        restTemplateService.get()
-            .exchange(baseUrl + city.getId(), HttpMethod.PATCH, new HttpEntity<>(cityInputDto), String.class);
+        integration.patch(city.getId(), cityInputDto);
     }
 }
