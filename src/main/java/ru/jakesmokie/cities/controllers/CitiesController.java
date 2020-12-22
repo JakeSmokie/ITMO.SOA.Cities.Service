@@ -29,4 +29,4 @@ public class CitiesController {
 
         return cityService.deport(from, to) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
-}
+}  
